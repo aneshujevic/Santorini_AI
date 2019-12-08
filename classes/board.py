@@ -9,7 +9,7 @@ class Board:
         text_representation = ''
         for x in range(5):
             for y in range(5):
-                text_representation += f'{self.board[x][y]} '
+                text_representation += f'{self.board[x][y]}\t'
             text_representation += '\n'
         return text_representation
 
