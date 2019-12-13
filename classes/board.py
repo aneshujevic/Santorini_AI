@@ -4,6 +4,11 @@ from .builder import Builder
 class Board:
     def __init__(self):
         self.board = [[0 for x in range(5)] for y in range(5)]
+        self.builders = []
+        self.builders.append(Builder("AI", [0, 0], self.board))
+        self.builders.append(Builder("AI", [0, 1], self.board))
+        self.builders.append(Builder("HU", [4, 3], self.board))
+        self.builders.append(Builder("HU", [4, 4], self.board))
 
     def __str__(self):
         text_representation = ''
@@ -16,50 +21,66 @@ class Board:
     def print_board(self):
         print(self)
 
-    # returns a tuple of all valid moves
-    # could be bottleneck
-    @staticmethod
-    def get_all_valid_moves(board_state):
-        list_of_moves = []
+    def is_terminal_state(self):
+        for builder in self.builders:
+            if builder.previous_value == 3:
+                return True
+        if (Board.get_valid_moving_moves(self.builders[0].coordinates, self.board) is None and
+            Board.get_valid_moving_moves(self.builders[1].coordinates, self.board) is None) or \
+                (Board.get_valid_moving_moves(self.builders[2].coordinates, self.board) is None and
+                 Board.get_valid_moving_moves(self.builders[3].coordinates, self.board) is None):
+            return True
+        else:
+            return False
 
-        for i in range(5):
-            for j in range(5):
-                if board_state[i][j] != 4 and not isinstance(board_state[i][j], Builder):
-                    list_of_moves.append([i, j])
+    def check_win(self):
+        for builder in self.builders:
+            if builder.previous_value == 3:
+                return f"{builder.affiliation} has won!"
 
-        return tuple(list_of_moves)
+        if Board.get_valid_moving_moves(self.builders[0].coordinates, self.board) is None and \
+                Board.get_valid_moving_moves(self.builders[1].coordinates, self.board) is None:
+            return "Human won!"
+        elif Board.get_valid_moving_moves(self.builders[2].coordinates, self.board) is None and \
+                Board.get_valid_moving_moves(self.builders[3].coordinates, self.board) is None:
+            return "AI won!"
 
     # returns a tuple of valid build moves
     @staticmethod
-    def get_valid_builds(starting_location, all_valid_moves):
+    def get_valid_builds(starting_location, board_state):
         valid_building_moves = []
         start_x = starting_location[0]
         start_y = starting_location[1]
 
         for x in range(3):
             for y in range(3):
-                if start_x + x - 1 < 0 or start_x + x + 1 > 5 or start_y + y - 1 < 0 or start_y + y + 1 > 5:
+                i = start_x + x
+                j = start_y + y
+                if i - 1 < 0 or i + 1 > 6 or j - 1 < 0 or j + 1 > 6:
                     pass
-                if [start_x + x - 1, start_y + y - 1] in all_valid_moves:
-                    valid_building_moves.append([start_x + x - 1, start_y + y - 1])
-        valid_building_moves.remove(starting_location)
+                elif board_state[i - 1][j - 1] != 4 and not isinstance(board_state[i - 1][j - 1], Builder):
+                    valid_building_moves.append([i - 1, j - 1])
+
+        # valid_building_moves.remove(starting_location)
 
         return tuple(valid_building_moves)
 
     # returns a tuple of valid moving moves
     @staticmethod
-    def get_valid_moving_moves(starting_location, board_state, all_valid_moves):
+    def get_valid_moving_moves(starting_location, board_state):
         valid_moving_moves = []
         start_x = starting_location[0]
         start_y = starting_location[1]
 
         for x in range(3):
             for y in range(3):
-                if start_x + x - 1 < 0 or start_x + x + 1 > 4 or start_y + y - 1 < 0 or start_y + y + 1 > 4:
+                i = start_x + x
+                j = start_y + y
+                if i - 1 < 0 or i + 1 > 4 or j - 1 < 0 or j + 1 > 4:
                     pass
-                if board_state[start_x][start_y] - board_state[start_x + x - 1][start_y + y - 1] >= -1 and\
-                        [start_x + x - 1, start_y + y - 1] in all_valid_moves:
-                    valid_moving_moves.append([start_x + x - 1, start_y + y - 1])
+                if board_state[start_x][start_y] - board_state[i - 1][j - 1] >= -1 and \
+                        board_state[i - 1][j - 1] != 4 and not isinstance(board_state[i - 1][j - 1], Builder):
+                    valid_moving_moves.append([i - 1, j - 1])
         valid_moving_moves.remove(starting_location)
 
         return tuple(valid_moving_moves)
