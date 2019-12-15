@@ -20,3 +20,7 @@ class Builder:
         x = move[0]
         y = move[1]
         board_state[x][y] += 1
+
+    def move_and_build(self, move_coords, build_coords, board_state):
+        self.move_to(move_coords, board_state)
+        self.build(build_coords, board_state)
