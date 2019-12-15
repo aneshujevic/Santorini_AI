@@ -68,6 +68,7 @@ class Board:
         else:
             range_y = [0, 3]
 
+        """
         for x in range(range_x[0], range_x[1]):
             for y in range(range_y[0], range_y[1]):
                 i = start_x + x
@@ -77,6 +78,12 @@ class Board:
                 # elif in the next line
                 if board_state[i - 1][j - 1] != 4 and not isinstance(board_state[i - 1][j - 1], Builder):
                     valid_building_moves.append([i - 1, j - 1])
+        """
+
+        valid_building_moves = [
+            [start_x + x - 1, start_y + y - 1] for x in range(range_x[0], range_x[1]) for y in range(range_y[0], range_y[1])
+            if board_state[start_x + x - 1][start_y + y - 1] != 4 and not isinstance(board_state[start_x + x - 1][start_y + y - 1], Builder)
+        ]
 
         return tuple(valid_building_moves)
 
