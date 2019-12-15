@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from .builder import Builder
 
 
@@ -52,13 +54,28 @@ class Board:
         start_x = starting_location[0]
         start_y = starting_location[1]
 
-        for x in range(3):
-            for y in range(3):
+        if start_x == 0:
+            range_x = [1, 3]
+        elif start_x == 4:
+            range_x = [0, 2]
+        else:
+            range_x = [0, 3]
+
+        if start_y == 0:
+            range_y = [1, 3]
+        elif start_y == 4:
+            range_y = [0, 2]
+        else:
+            range_y = [0, 3]
+
+        for x in range(range_x[0], range_x[1]):
+            for y in range(range_y[0], range_y[1]):
                 i = start_x + x
                 j = start_y + y
-                if i - 1 < 0 or i + 1 > 6 or j - 1 < 0 or j + 1 > 6:
-                    pass
-                elif board_state[i - 1][j - 1] != 4 and not isinstance(board_state[i - 1][j - 1], Builder):
+                #   if i - 1 < 0 or i + 1 > 6 or j - 1 < 0 or j + 1 > 6:
+                #       pass
+                # elif in the next line
+                if board_state[i - 1][j - 1] != 4 and not isinstance(board_state[i - 1][j - 1], Builder):
                     valid_building_moves.append([i - 1, j - 1])
 
         return tuple(valid_building_moves)
@@ -70,15 +87,39 @@ class Board:
         start_x = starting_location[0]
         start_y = starting_location[1]
 
-        for x in range(3):
-            for y in range(3):
+        if start_x == 0:
+            range_x = [1, 3]
+        elif start_x == 4:
+            range_x = [0, 2]
+        else:
+            range_x = [0, 3]
+
+        if start_y == 0:
+            range_y = [1, 3]
+        elif start_y == 4:
+            range_y = [0, 2]
+        else:
+            range_y = [0, 3]
+
+        """ backup lolz
+        for x in range(range_x[0], range_x[1]):
+            for y in range(range_y[0], range_y[1]):
                 i = start_x + x
                 j = start_y + y
-                if i - 1 < 0 or i - 1 > 4 or j - 1 < 0 or j - 1 > 4:
-                    pass
-                elif not isinstance(board_state[i - 1][j - 1], Builder) and \
-                        board_state[i - 1][j - 1] != 4 and \
+                #    if i - 1 < 0 or i - 1 > 4 or j - 1 < 0 or j - 1 > 4:
+                #        pass
+                # elif in the next line
+                if not isinstance(board_state[i - 1][j - 1], Builder) and 
+                        board_state[i - 1][j - 1] != 4 and 
                         board_state[start_x][start_y].previous_value - board_state[i - 1][j - 1] >= -1:
                     valid_moving_moves.append([i - 1, j - 1])
+        """
+
+        valid_moving_moves = [
+            [start_x + x - 1, start_y + y - 1] for x in range(range_x[0], range_x[1]) for y in range(range_y[0], range_y[1])
+            if not isinstance(board_state[start_x + x - 1][start_y + y - 1], Builder) and
+               board_state[start_x + x - 1][start_y + y - 1] != 4 and
+               board_state[start_x][start_y].previous_value - board_state[start_x + x - 1][start_y + y - 1] >= -1
+        ]
 
         return tuple(valid_moving_moves)

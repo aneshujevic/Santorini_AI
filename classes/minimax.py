@@ -45,6 +45,7 @@ def minimax(board_obj, maximizing_player, depth, builder_number, move_coords, bu
                             max_eval[2] = build
                             max_eval[3] = evaluation[3]
                         alpha = max(alpha, max_eval[3])
+                        # maybe it should be return instead of break
                         if beta <= alpha:
                             break
         return max_eval
