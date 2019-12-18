@@ -16,6 +16,7 @@ class Board:
             self.board_state = [[self.board_state[x][y] for x in range(5)] for y in range(5)]
 
         self.builders = []
+        self.game_over = False
 
     def __str__(self):
         text_representation = ''
@@ -28,8 +29,22 @@ class Board:
     def print_board(self):
         print(self)
 
-    def add_builder(self, coordinates, affiliation, builder_id):
+    def add_builder(self, affiliation, coordinates, builder_id):
         self.builders.append(Builder(affiliation, coordinates, self.board_state, builder_id))
+
+    def do_move(self, id_of_builder, move_coords, build_coords):
+        for builder in self.builders:
+            if builder.id == id_of_builder:
+                last_builder_coords = builder.coordinates
+                builder.move_and_build(move_coords, build_coords, self)
+                return [id_of_builder, last_builder_coords, build_coords]
+
+    def undo_move(self, last_move):
+        for builder in self.builders:
+            if builder.id == last_move[0]:
+                builder.move_to(last_move[1], self)
+                self.board_state[last_move[2][0]][last_move[2][1]] -= 1
+                break
 
     def clone(self):
         new_board_object = Board(self.board_state)
@@ -38,14 +53,14 @@ class Board:
 
         return new_board_object
 
-    def is_terminal_state(self, all_available_moves):
-        for builder in self.builders:
-            if builder.previous_value_of_cell == 3:
-                return True
-        if (Board.get_valid_moving_moves(self.builders[0].coordinates, self.board_state, all_available_moves) is None and
-            Board.get_valid_moving_moves(self.builders[1].coordinates, self.board_state, all_available_moves) is None) or \
-                (Board.get_valid_moving_moves(self.builders[2].coordinates, self.board_state, all_available_moves) is None and
-                 Board.get_valid_moving_moves(self.builders[3].coordinates, self.board_state, all_available_moves) is None):
+    def is_terminal_state(self):
+        all_available_moves = self.get_all_available_moves()
+        if self.game_over:
+            return True
+        if (not Board.get_valid_moving_moves(self.builders[0].coordinates, self, all_available_moves) and
+            not Board.get_valid_moving_moves(self.builders[1].coordinates, self, all_available_moves)) or \
+                (not Board.get_valid_moving_moves(self.builders[2].coordinates, self, all_available_moves) and
+                 not Board.get_valid_moving_moves(self.builders[3].coordinates, self, all_available_moves)):
             return True
         else:
             return False
@@ -55,56 +70,66 @@ class Board:
             if builder.previous_value_of_cell == 3:
                 return f"{builder.affiliation} has won!"
 
-        if Board.get_valid_moving_moves(self.builders[0].coordinates, self.board_state, all_available_moves) is None and \
-                Board.get_valid_moving_moves(self.builders[1].coordinates, self.board_state, all_available_moves) is None:
+        if not Board.get_valid_moving_moves(self.builders[0].coordinates, self, all_available_moves) and \
+                not Board.get_valid_moving_moves(self.builders[1].coordinates, self, all_available_moves):
             return "Human won!"
-        elif Board.get_valid_moving_moves(self.builders[2].coordinates, self.board_state, all_available_moves) is None and \
-                Board.get_valid_moving_moves(self.builders[3].coordinates, self.board_state, all_available_moves) is None:
+        elif not Board.get_valid_moving_moves(self.builders[2].coordinates, self, all_available_moves) and \
+                not Board.get_valid_moving_moves(self.builders[3].coordinates, self, all_available_moves):
             return "AI won!"
 
-    # returns tuple of all available moves
+    # returns list of all available moves
     def get_all_available_moves(self):
-        return tuple([
-            [x, y] for x in range(5) for y in range(5)
+        return [
+            [x, y]
+            for x in range(5)
+            for y in range(5)
             if not self.board_state[x][y] in self.not_available_cells_values
-        ])
+        ]
 
-    # returns a tuple of valid build moves
+    # returns a list of valid build moves
     @staticmethod
-    def get_valid_builds(starting_location, board_state, all_available_moves):
-        start_x = starting_location[0]
-        start_y = starting_location[1]
+    def get_valid_builds(starting_location, all_available_moves):
+        start_x = starting_location[0] - 1
+        start_y = starting_location[1] - 1
 
         range_x = Board.get_range_x(start_x)
         range_y = Board.get_range_y(start_y)
 
         valid_building_moves = [
-            [start_x + x - 1, start_y + y - 1]
+            [start_x + x, start_y + y]
             for x in range(range_x[0], range_x[1])
             for y in range(range_y[0], range_y[1])
-            if [start_x + x - 1, start_y + y - 1] in all_available_moves
+            if [start_x + x, start_y + y] in all_available_moves
         ]
 
-        return tuple(valid_building_moves)
+        return valid_building_moves
 
-    # returns a tuple of valid moving moves
+    # returns a list of valid moving moves
     @staticmethod
-    def get_valid_moving_moves(starting_location, board_state, all_available_moves):
-        start_x = starting_location[0]
-        start_y = starting_location[1]
+    def get_valid_moving_moves(starting_location, board_object, all_available_moves):
+        start_x = starting_location[0] - 1
+        start_y = starting_location[1] - 1
+
+        board_state = board_object.board_state
 
         range_x = Board.get_range_x(start_x)
         range_y = Board.get_range_y(start_y)
 
+        previous_value_of_current_cell = None
+        for builder in board_object.builders:
+            if builder.coordinates == starting_location:
+                previous_value_of_current_cell = builder.previous_value_of_cell
+                break
+
         valid_moving_moves = [
-            [start_x + x - 1, start_y + y - 1]
+            [start_x + x, start_y + y]
             for x in range(range_x[0], range_x[1])
             for y in range(range_y[0], range_y[1])
-            if [start_x + x - 1, start_y + y - 1] in all_available_moves and
-            board_state[start_x][start_y].previous_value - board_state[start_x + x - 1][start_y + y - 1] >= -1
+            if [start_x + x, start_y + y] in all_available_moves and
+            previous_value_of_current_cell - board_state[start_x + x][start_y + y] >= -1
         ]
 
-        return tuple(valid_moving_moves)
+        return valid_moving_moves
 
     @staticmethod
     def get_range_x(x):
