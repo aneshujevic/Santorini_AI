@@ -12,7 +12,7 @@ class Board:
         """
         :param board_state: a matrix from which the board should be made
         """
-        self.not_available_cells_values = [-4, -3, -2, -1, 4]
+        self.not_available_cells_values = (-4, -3, -2, -1, 4)
         if board_state is None:
             self.board_state = [[0 for _ in range(5)] for _ in range(5)]
         else:
@@ -126,7 +126,7 @@ class Board:
         range_x = Board.get_range_x(start_x)
         range_y = Board.get_range_y(start_y)
 
-        previous_value_of_current_cell = None
+        previous_value_of_current_cell = 0
         for builder in board_object.builders:
             if builder.coordinates == starting_location:
                 previous_value_of_current_cell = builder.previous_value_of_cell
@@ -144,7 +144,7 @@ class Board:
 
     @staticmethod
     def get_range_x(x):
-        if x == 0:
+        if x == -1:
             range_x = [1, 3]
         elif x == 4:
             range_x = [0, 2]
@@ -154,7 +154,7 @@ class Board:
 
     @staticmethod
     def get_range_y(y):
-        if y == 0:
+        if y == -1:
             range_y = [1, 3]
         elif y == 4:
             range_y = [0, 2]

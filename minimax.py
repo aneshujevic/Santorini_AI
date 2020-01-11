@@ -63,6 +63,7 @@ def minimax(board_obj, maximizing_player, depth, builder_number, move_coords, bu
         #       [list_of_builds_for_move_1], [list_of_builds_for_move2], ...
         #   ]
         # ]
+        builders_id = (-1, -2)
 
         for builder_no in range(2):
             move_index = 0
@@ -72,16 +73,14 @@ def minimax(board_obj, maximizing_player, depth, builder_number, move_coords, bu
                     if build == move:
                         continue
                     board_copy = board_obj.clone()
-                    # TODO: ispraviti builder_no -2 zbog dodavanja novih buildera
-                    board_copy.do_move(builder_no - 2, move, build)
+                    board_copy.do_move(builders_id[builder_no], move, build)
                     evaluation = minimax(board_copy, False, depth - 1, builder_no, move, build, alpha, beta)
                     if evaluation[3] > max_eval[3]:
-                        max_eval[0] = builder_no - 2
+                        max_eval[0] = builders_id[builder_no]
                         max_eval[1] = move
                         max_eval[2] = build
                         max_eval[3] = evaluation[3]
                     alpha = max(alpha, max_eval[3])
-                    #board_obj.undo_move(current_move)
                     # TODO: Check if return instead of break
                     if beta <= alpha:
                         return max_eval
@@ -104,24 +103,22 @@ def minimax(board_obj, maximizing_player, depth, builder_number, move_coords, bu
             ]
 
         min_eval = [-1, -1, -1, math.inf]
+        builders_id = (-3, -4)
         for builder_no in range(2):
             move_index = 0
             for move in builder_all_moves[builder_no]:
                 for build in builder_all_builds[builder_no][move_index]:
-                    # TODO: here should the move be done on a copy of a board object by builder with appropriate id doing the move
                     if build == move:
                         continue
-                    #current_move = board_obj.do_move(builder_no - 4, move, build)
                     board_copy = board_obj.clone()
-                    board_copy.do_move(builder_no - 4, move, build)
+                    board_copy.do_move(builders_id[builder_no], move, build)
                     evaluation = minimax(board_copy, True, depth - 1, builder_no, move, build, alpha, beta)
                     if evaluation[3] < min_eval[3]:
-                        min_eval[0] = builder_no
+                        min_eval[0] = builders_id[builder_no]
                         min_eval[1] = move
                         min_eval[2] = build
                         min_eval[3] = evaluation[3]
                     beta = min(beta, min_eval[3])
-                    #board_obj.undo_move(current_move)
                     if beta <= alpha:
                         return min_eval
                 move_index += 1
