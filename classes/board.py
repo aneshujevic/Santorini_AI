@@ -9,11 +9,14 @@ from .builder import Builder
 # -2, -1 AI builders
 class Board:
     def __init__(self, board_state=None):
-        self.not_available_cells_values = [-4, -3, -2, -1, 4]
+        """
+        :param board_state: a matrix from which the board should be made
+        """
+        self.not_available_cells_values = (-4, -3, -2, -1, 4)
         if board_state is None:
             self.board_state = [[0 for _ in range(5)] for _ in range(5)]
         else:
-            self.board_state = [[self.board_state[x][y] for x in range(5)] for y in range(5)]
+            self.board_state = [[board_state[x][y] for x in range(5)] for y in range(5)]
 
         self.builders = []
         self.game_over = False
@@ -30,7 +33,15 @@ class Board:
         print(self)
 
     def add_builder(self, affiliation, coordinates, builder_id):
-        self.builders.append(Builder(affiliation, coordinates, self.board_state, builder_id))
+        """
+        :param affiliation: string that represents affiliation (AI or HU)
+        :param coordinates: list of coordinates [x, y]
+        :param builder_id: integer that represents id of builder
+        :return: reference to a builder
+        """
+        new_builder = Builder(affiliation, coordinates, self.board_state, builder_id)
+        self.builders.append(new_builder)
+        return new_builder
 
     def do_move(self, id_of_builder, move_coords, build_coords):
         for builder in self.builders:
@@ -49,7 +60,7 @@ class Board:
     def clone(self):
         new_board_object = Board(self.board_state)
         for builder in self.builders:
-            new_board_object.add_builder(builder.coordinates, builder.affiliation, builder.id)
+            new_board_object.add_builder(builder.affiliation, builder.coordinates, builder.id)
 
         return new_board_object
 
@@ -87,6 +98,7 @@ class Board:
         ]
 
     # returns a list of valid build moves
+    """
     @staticmethod
     def get_valid_builds(starting_location, all_available_moves):
         start_x = starting_location[0] - 1
@@ -99,10 +111,56 @@ class Board:
             [start_x + x, start_y + y]
             for x in range(range_x[0], range_x[1])
             for y in range(range_y[0], range_y[1])
-            if [start_x + x, start_y + y] in all_available_moves
+            if not [start_x + x, start_y + y] == starting_location and
+            [start_x + x, start_y + y] in all_available_moves
         ]
 
         return valid_building_moves
+        
+    # returns a list of valid moving moves
+    @staticmethod
+    def get_valid_moving_moves(starting_location, board_object, all_available_moves):
+        start_x = starting_location[0] - 1
+        start_y = starting_location[1] - 1
+
+        board_state = board_object.board_state
+
+        range_x = Board.get_range_x(start_x)
+        range_y = Board.get_range_y(start_y)
+
+        previous_value_of_current_cell = 0
+        for builder in board_object.builders:
+            if builder.coordinates == starting_location:
+                previous_value_of_current_cell = builder.previous_value_of_cell
+                break
+
+        valid_moving_moves = [
+            [start_x + x, start_y + y]
+            for x in range(range_x[0], range_x[1])
+            for y in range(range_y[0], range_y[1])
+            if [start_x + x, start_y + y] in all_available_moves and
+            not [start_x + x, start_y + y] == starting_location and
+            previous_value_of_current_cell - board_state[start_x + x][start_y + y] >= -1
+        ]
+
+        return valid_moving_moves
+        
+    """
+
+    # TEST
+    @staticmethod
+    def get_valid_builds(starting_location, all_available_moves):
+        start_x = starting_location[0] - 1
+        start_y = starting_location[1] - 1
+
+        range_x = Board.get_range_x(start_x)
+        range_y = Board.get_range_y(start_y)
+
+        for x in range(range_x[0], range_x[1]):
+            for y in range(range_y[0], range_y[1]):
+                if not [start_x + x, start_y + y] == starting_location and \
+                        [start_x + x, start_y + y] in all_available_moves:
+                    yield [start_x + x, start_y + y]
 
     # returns a list of valid moving moves
     @staticmethod
@@ -115,25 +173,22 @@ class Board:
         range_x = Board.get_range_x(start_x)
         range_y = Board.get_range_y(start_y)
 
-        previous_value_of_current_cell = None
+        previous_value_of_current_cell = 0
         for builder in board_object.builders:
             if builder.coordinates == starting_location:
                 previous_value_of_current_cell = builder.previous_value_of_cell
                 break
 
-        valid_moving_moves = [
-            [start_x + x, start_y + y]
-            for x in range(range_x[0], range_x[1])
-            for y in range(range_y[0], range_y[1])
-            if [start_x + x, start_y + y] in all_available_moves and
-            previous_value_of_current_cell - board_state[start_x + x][start_y + y] >= -1
-        ]
-
-        return valid_moving_moves
+        for x in range(range_x[0], range_x[1]):
+            for y in range(range_y[0], range_y[1]):
+                if [start_x + x, start_y + y] in all_available_moves and \
+                        not [start_x + x, start_y + y] == starting_location and \
+                        previous_value_of_current_cell - board_state[start_x + x][start_y + y] >= -1:
+                    yield [start_x + x, start_y + y]
 
     @staticmethod
     def get_range_x(x):
-        if x == 0:
+        if x == -1:
             range_x = [1, 3]
         elif x == 4:
             range_x = [0, 2]
@@ -143,7 +198,7 @@ class Board:
 
     @staticmethod
     def get_range_y(y):
-        if y == 0:
+        if y == -1:
             range_y = [1, 3]
         elif y == 4:
             range_y = [0, 2]
