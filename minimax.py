@@ -26,49 +26,15 @@ def minimax(board_obj, maximizing_player, depth, builder_number, move_coords, bu
             return [builder_number, move_coords, build_coords,
                     -static_eval(board_obj, move_coords, build_coords)]
 
-    # initialisation of matrices of all moves and builds for each builder
-    builder_all_moves = [[], []]
-    builder_all_builds = [[], []]
     all_available_moves = board_obj.get_all_available_moves()
 
     if maximizing_player:
-        for builder_no in range(2):
-            # making a list of moves for builder specified by builder_no
-            builder_all_moves[builder_no] = Board.get_valid_moving_moves(
-                board_obj.builders[builder_no].coordinates, board_obj, all_available_moves
-            )
-
-            # making a matrix of all builds for each builder and for each move inside of a matrix of moves
-            length = len(builder_all_moves[builder_no])
-            builder_all_builds[builder_no] = [
-                Board.get_valid_builds(
-                    builder_all_moves[builder_no][move_index], all_available_moves
-                ) for move_index in range(length)
-            ]
-
         max_eval = [-1, -1, -1, -math.inf]
-        # every builder has one row for himself inside builder_all_builds matrix
-        # inside of that row is a list which contains lists of possible builds for each move
-
-        # -- builder_all_builds matrix --
-        # for each move we find the appropriate build in three-dimensional array
-        # [
-        #   first_builder
-        #   [
-        #       [list_of_builds_for_move_1], [list_of_builds_for_move2], ...
-        #   ]
-        #
-        #   second_builder
-        #   [
-        #       [list_of_builds_for_move_1], [list_of_builds_for_move2], ...
-        #   ]
-        # ]
         builders_id = (-1, -2)
 
         for builder_no in range(2):
-            move_index = 0
-            for move in builder_all_moves[builder_no]:
-                for build in builder_all_builds[builder_no][move_index]:
+            for move in Board.get_valid_moving_moves(board_obj.builders[builder_no].coordinates, board_obj, all_available_moves):
+                for build in Board.get_valid_builds(move, all_available_moves):
                     # TODO: here should the move be done on a copy of a board object by builder with appropriate id doing the move
                     if build == move:
                         continue
@@ -84,30 +50,14 @@ def minimax(board_obj, maximizing_player, depth, builder_number, move_coords, bu
                     # TODO: Check if return instead of break
                     if beta <= alpha:
                         return max_eval
-                move_index += 1
         return max_eval
     else:
-        for builder_no in range(2):
-            # making a list of moves for builder specified by builder_no
-            # accessing human builders by adding 2 as index for builders array
-            builder_all_moves[builder_no] = Board.get_valid_moving_moves(
-                board_obj.builders[builder_no + 2].coordinates, board_obj, all_available_moves
-            )
-
-            # making a matrix of all builds for each builder and for each move inside of a matrix of moves
-            length = len(builder_all_moves[builder_no])
-            builder_all_builds[builder_no] = [
-                Board.get_valid_builds(
-                    builder_all_moves[builder_no][move_index], all_available_moves
-                ) for move_index in range(length)
-            ]
-
         min_eval = [-1, -1, -1, math.inf]
         builders_id = (-3, -4)
+
         for builder_no in range(2):
-            move_index = 0
-            for move in builder_all_moves[builder_no]:
-                for build in builder_all_builds[builder_no][move_index]:
+            for move in Board.get_valid_moving_moves(board_obj.builders[builder_no + 2].coordinates, board_obj, all_available_moves):
+                for build in Board.get_valid_builds(move, all_available_moves):
                     if build == move:
                         continue
                     board_copy = board_obj.clone()
@@ -121,7 +71,6 @@ def minimax(board_obj, maximizing_player, depth, builder_number, move_coords, bu
                     beta = min(beta, min_eval[3])
                     if beta <= alpha:
                         return min_eval
-                move_index += 1
         return min_eval
 
 
@@ -131,22 +80,24 @@ def static_eval(board_obj, move_coords, build_coords):
     m = board_obj.board_state[move_coords[0]][move_coords[1]]
     ai_distance = 0
     hu_distance = 0
+    b_x = build_coords[0]
+    b_y = build_coords[1]
 
-    if board_obj.board_state[build_coords[0]][build_coords[1]] == 0:
+    if board_obj.board_state[b_x][b_y] == 0:
         return m
 
     for i in [-1, -2]:
-        ai_distance += math.sqrt(
-            math.pow(board_obj.builders[i].coordinates[0] - build_coords[0], 2) +
-            math.pow(board_obj.builders[i].coordinates[1] - build_coords[1], 2)
+        ai_distance += max(
+            math.fabs(board_obj.builders[i].coordinates[0] - b_x),
+            math.fabs(board_obj.builders[i].coordinates[1] - b_y)
         )
 
     for i in [-3, -4]:
-        hu_distance += math.sqrt(
-            math.pow(board_obj.builders[i].coordinates[0] - build_coords[0], 2) +
-            math.pow(board_obj.builders[i].coordinates[1] - build_coords[1], 2)
+        hu_distance += max(
+            math.fabs(board_obj.builders[i].coordinates[0] - b_x),
+            math.fabs(board_obj.builders[i].coordinates[1] - b_y)
         )
 
-    length = board_obj.board_state[build_coords[0]][build_coords[1]] * math.fabs(ai_distance - hu_distance)
+    length = board_obj.board_state[b_x][b_y] * math.fabs(ai_distance - hu_distance)
 
     return m + length

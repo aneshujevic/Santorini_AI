@@ -97,7 +97,6 @@ class Board:
             if not self.board_state[x][y] in self.not_available_cells_values
         ]
 
-    # returns a list of valid build moves
     @staticmethod
     def get_valid_builds(starting_location, all_available_moves):
         start_x = starting_location[0] - 1
@@ -106,14 +105,11 @@ class Board:
         range_x = Board.get_range_x(start_x)
         range_y = Board.get_range_y(start_y)
 
-        valid_building_moves = [
-            [start_x + x, start_y + y]
-            for x in range(range_x[0], range_x[1])
-            for y in range(range_y[0], range_y[1])
-            if [start_x + x, start_y + y] in all_available_moves
-        ]
-
-        return valid_building_moves
+        for x in range(range_x[0], range_x[1]):
+            for y in range(range_y[0], range_y[1]):
+                if not [start_x + x, start_y + y] == starting_location and \
+                        [start_x + x, start_y + y] in all_available_moves:
+                    yield [start_x + x, start_y + y]
 
     # returns a list of valid moving moves
     @staticmethod
@@ -132,15 +128,12 @@ class Board:
                 previous_value_of_current_cell = builder.previous_value_of_cell
                 break
 
-        valid_moving_moves = [
-            [start_x + x, start_y + y]
-            for x in range(range_x[0], range_x[1])
-            for y in range(range_y[0], range_y[1])
-            if [start_x + x, start_y + y] in all_available_moves and
-            previous_value_of_current_cell - board_state[start_x + x][start_y + y] >= -1
-        ]
-
-        return valid_moving_moves
+        for x in range(range_x[0], range_x[1]):
+            for y in range(range_y[0], range_y[1]):
+                if [start_x + x, start_y + y] in all_available_moves and \
+                        not [start_x + x, start_y + y] == starting_location and \
+                        previous_value_of_current_cell - board_state[start_x + x][start_y + y] >= -1:
+                    yield [start_x + x, start_y + y]
 
     @staticmethod
     def get_range_x(x):
