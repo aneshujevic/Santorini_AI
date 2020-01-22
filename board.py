@@ -1,4 +1,5 @@
 from functools import lru_cache
+from math import fabs
 
 from .builder import Builder
 
@@ -16,7 +17,7 @@ class Board:
         if board_state is None:
             self.board_state = [[0 for _ in range(5)] for _ in range(5)]
         else:
-            self.board_state = [[board_state[x][y] for x in range(5)] for y in range(5)]
+            self.board_state = [[board_state[y][x] for x in range(5)] for y in range(5)]
 
         self.builders = []
         self.game_over = False
@@ -61,7 +62,6 @@ class Board:
         new_board_object = Board(self.board_state)
         for builder in self.builders:
             new_board_object.add_builder(builder.affiliation, builder.coordinates, builder.id)
-
         return new_board_object
 
     def is_terminal_state(self):
@@ -76,17 +76,22 @@ class Board:
         else:
             return False
 
+    # 1 means AI won -1 mean HU won
     def check_win(self, all_available_moves):
         for builder in self.builders:
             if builder.previous_value_of_cell == 3:
-                return f"{builder.affiliation} has won!"
+                return 1 if builder.affiliation == "AI" else -1
 
-        if not Board.get_valid_moving_moves(self.builders[0].coordinates, self, all_available_moves) and \
-                not Board.get_valid_moving_moves(self.builders[1].coordinates, self, all_available_moves):
-            return "Human won!"
-        elif not Board.get_valid_moving_moves(self.builders[2].coordinates, self, all_available_moves) and \
-                not Board.get_valid_moving_moves(self.builders[3].coordinates, self, all_available_moves):
-            return "AI won!"
+        if Board.get_valid_moving_moves(self.builders[0].coordinates, self, all_available_moves) == [] and \
+                Board.get_valid_moving_moves(self.builders[1].coordinates, self, all_available_moves) == []:
+            print("ne more se pomeri human")
+            return 1
+        elif Board.get_valid_moving_moves(self.builders[2].coordinates, self, all_available_moves) == [] and \
+                Board.get_valid_moving_moves(self.builders[3].coordinates, self, all_available_moves) == []:
+            print("ne more se pomeri ai")
+            return -1
+
+        return 0
 
     # returns list of all available moves
     def get_all_available_moves(self):
@@ -102,8 +107,8 @@ class Board:
         start_x = starting_location[0] - 1
         start_y = starting_location[1] - 1
 
-        range_x = Board.get_range_x(start_x)
-        range_y = Board.get_range_y(start_y)
+        range_x = Board.get_range_axis(start_x)
+        range_y = Board.get_range_axis(start_y)
 
         for x in range(range_x[0], range_x[1]):
             for y in range(range_y[0], range_y[1]):
@@ -119,8 +124,8 @@ class Board:
 
         board_state = board_object.board_state
 
-        range_x = Board.get_range_x(start_x)
-        range_y = Board.get_range_y(start_y)
+        range_x = Board.get_range_axis(start_x)
+        range_y = Board.get_range_axis(start_y)
 
         previous_value_of_current_cell = 0
         for builder in board_object.builders:
@@ -132,25 +137,15 @@ class Board:
             for y in range(range_y[0], range_y[1]):
                 if [start_x + x, start_y + y] in all_available_moves and \
                         not [start_x + x, start_y + y] == starting_location and \
-                        previous_value_of_current_cell - board_state[start_x + x][start_y + y] >= -1:
+                        board_state[start_x + x][start_y + y] - previous_value_of_current_cell <= 1:
                     yield [start_x + x, start_y + y]
 
     @staticmethod
-    def get_range_x(x):
-        if x == -1:
-            range_x = [1, 3]
-        elif x == 4:
-            range_x = [0, 2]
+    def get_range_axis(z):
+        if z == -1:
+            range_z = [1, 3]
+        elif z == 4:
+            range_z = [0, 2]
         else:
-            range_x = [0, 3]
-        return range_x
-
-    @staticmethod
-    def get_range_y(y):
-        if y == -1:
-            range_y = [1, 3]
-        elif y == 4:
-            range_y = [0, 2]
-        else:
-            range_y = [0, 3]
-        return range_y
+            range_z = [0, 3]
+        return range_z
