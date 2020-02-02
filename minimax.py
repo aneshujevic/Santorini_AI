@@ -2,8 +2,6 @@ import math
 from .board import Board
 
 
-# rename to alpha_beta_custom
-# TODO: Check near-win state move_coords being null
 def alpha_beta_custom(board_obj, maximizing_player, depth, builder_number, move_coords, build_coords, alpha, beta):
     """
     player 0 is AI (maximizing player)
@@ -72,6 +70,54 @@ def alpha_beta_custom(board_obj, maximizing_player, depth, builder_number, move_
                 if should_break:
                     break
         return min_eval
+
+
+def static_eval_custom(board_obj, move_coords, build_coords):
+    """
+        :param board_obj: Board object
+        :param move_coords: Coordinates to which player moved
+        :param build_coords: Coordinates to which player built
+        :return:
+    """
+    all_available_moves = board_obj.get_all_available_moves()
+    anyone_won = board_obj.check_win(all_available_moves)
+
+    if anyone_won == 1:
+        return 10000
+    elif anyone_won == -1:
+        return -10000
+
+    b_x, b_y = build_coords
+    build_blocks = board_obj.board_state[b_x][b_y]
+
+    m_x, m_y = move_coords
+    move_blocks = board_obj.board_state[m_x][m_y]
+    for builder in board_obj.builders:
+        if builder.id == move_blocks:
+            move_blocks = builder.previous_value_of_cell
+            break
+
+    ai_distance = 0
+    hu_distance = 0
+
+    for i in [-1, -2]:
+        ai_distance += max(
+            math.fabs(board_obj.builders[i].coordinates[0] - b_x),
+            math.fabs(board_obj.builders[i].coordinates[1] - b_y)
+        )
+
+    for i in [-3, -4]:
+        hu_distance += max(
+            math.fabs(board_obj.builders[i].coordinates[0] - b_x),
+            math.fabs(board_obj.builders[i].coordinates[1] - b_y)
+        )
+
+    hu_level = board_obj.builders[2].previous_value_of_cell + board_obj.builders[3].previous_value_of_cell
+    ai_level = board_obj.builders[0].previous_value_of_cell + board_obj.builders[1].previous_value_of_cell
+
+    length = ai_distance - hu_distance
+
+    return length * build_blocks + move_blocks * 10 + 15 * (ai_level - hu_level)
 
 
 def alpha_beta_project(board_obj, maximizing_player, depth, builder_number, move_coords, build_coords, alpha, beta):
@@ -156,16 +202,6 @@ def minimax(board_obj, maximizing_player, depth, builder_number, move_coords, bu
     :param build_coords: Coordinates of build
     :return: List with [builder number, move, build, best score]
     """
-    """
-    if maximizing_player:
-        if board_obj.is_terminal_state() or depth == 0:
-            return [builder_number, move_coords, build_coords,
-                    static_eval(board_obj, move_coords, build_coords)]
-    else:
-        if board_obj.is_terminal_state() or depth == 0:
-            return [builder_number, move_coords, build_coords,
-                    -static_eval(board_obj, move_coords, build_coords)]
-    """
     if board_obj.is_terminal_state() or depth == 0:
         return [builder_number, move_coords, build_coords,
                 static_eval_project(board_obj, move_coords, build_coords)]
@@ -208,46 +244,13 @@ def minimax(board_obj, maximizing_player, depth, builder_number, move_coords, bu
         return min_eval
 
 
-def static_eval_custom(board_obj, move_coords, build_coords):
-    all_available_moves = board_obj.get_all_available_moves()
-    anyone_won = board_obj.check_win(all_available_moves)
-
-    if anyone_won == 1:
-        return 500
-    elif anyone_won == -1:
-        return -500
-
-    b_x, b_y = build_coords
-    build_blocks = board_obj.board_state[b_x][b_y]
-
-    m_x, m_y = move_coords
-    move_blocks = board_obj.board_state[m_x][m_y]
-    for builder in board_obj.builders:
-        if builder.id == move_blocks:
-            move_blocks = builder.previous_value_of_cell
-            break
-
-    ai_distance = 0
-    hu_distance = 0
-
-    for i in [-1, -2]:
-        ai_distance += max(
-            math.fabs(board_obj.builders[i].coordinates[0] - b_x),
-            math.fabs(board_obj.builders[i].coordinates[1] - b_y)
-        )
-
-    for i in [-3, -4]:
-        hu_distance += max(
-            math.fabs(board_obj.builders[i].coordinates[0] - b_x),
-            math.fabs(board_obj.builders[i].coordinates[1] - b_y)
-        )
-
-    length = ai_distance - hu_distance
-    # print(f"length {length} build {build} levels {10 * (ai_levels - hu_levels)}")
-    return length * build_blocks + move_blocks * 32
-
-
 def static_eval_project(board_obj, move_coords, build_coords):
+    """
+    :param board_obj: Board object
+    :param move_coords: Coordinates to which player moved
+    :param build_coords: Coordinates to which player built
+    :return:
+    """
     b_x, b_y = build_coords
     build = board_obj.board_state[b_x][b_y]
 
@@ -273,5 +276,5 @@ def static_eval_project(board_obj, move_coords, build_coords):
             math.fabs(board_obj.builders[i].coordinates[1] - b_y)
         )
 
-    l = build * (ai_distance - hu_distance)
-    return l + m
+    L = build * (ai_distance - hu_distance)
+    return L + m

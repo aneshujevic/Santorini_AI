@@ -12,6 +12,11 @@ class Builder:
 
     # move to new coordinates and return the value of old cell on board
     def move_to(self, new_coordinates, board_object):
+        """
+        :param new_coordinates: Coordinates to which builder is being moved
+        :param board_object: Board object
+        :return: None
+        """
         board_state = board_object.board_state
         board_state[self.coordinates[0]][self.coordinates[1]] = self.previous_value_of_cell
 
@@ -23,10 +28,21 @@ class Builder:
             board_object.game_over = True
 
     def __build(self, build_coords, board_object):
+        """
+        :param build_coords: Coordinates on which builder is building
+        :param board_object: Board object
+        :return: None
+        """
         x = build_coords[0]
         y = build_coords[1]
         board_object.board_state[x][y] += 1
 
     def move_and_build(self, move_coords, build_coords, board_object):
+        """
+        :param move_coords: Coordinates to which builder is being moved
+        :param build_coords: Coordinates on which builder is building
+        :param board_object: Board object
+        :return:
+        """
         self.move_to(move_coords, board_object)
         self.__build(build_coords, board_object)
