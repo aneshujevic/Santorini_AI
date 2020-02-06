@@ -83,9 +83,9 @@ def static_eval_custom(board_obj, move_coords, build_coords):
     anyone_won = board_obj.check_win(all_available_moves)
 
     if anyone_won == 1:
-        return 10000
+        return math.inf
     elif anyone_won == -1:
-        return -10000
+        return -math.inf
 
     b_x, b_y = build_coords
     build_blocks = board_obj.board_state[b_x][b_y]
@@ -117,7 +117,7 @@ def static_eval_custom(board_obj, move_coords, build_coords):
 
     length = ai_distance - hu_distance
 
-    return length * build_blocks + move_blocks * 10 + 15 * (ai_level - hu_level)
+    return length * build_blocks + move_blocks * 10 + 20 * (ai_level - hu_level)
 
 
 def alpha_beta_project(board_obj, maximizing_player, depth, builder_number, move_coords, build_coords, alpha, beta):
@@ -251,6 +251,15 @@ def static_eval_project(board_obj, move_coords, build_coords):
     :param build_coords: Coordinates to which player built
     :return:
     """
+    all_available_moves = board_obj.get_all_available_moves()
+    anyone_won = board_obj.check_win(all_available_moves)
+
+    if anyone_won == 1:
+        return math.inf
+    elif anyone_won == -1:
+        return -math.inf
+
+    
     b_x, b_y = build_coords
     build = board_obj.board_state[b_x][b_y]
 

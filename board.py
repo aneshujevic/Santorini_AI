@@ -73,10 +73,8 @@ class Board:
                 return 1 if builder.affiliation == "AI" else -1
 
         if not self.check_player_can_move(True, all_available_moves):
-            print("ne more se pomeri human")
             return 1
         elif not self.check_player_can_move(False, all_available_moves):
-            print("ne more se pomeri ai")
             return -1
 
         return 0
