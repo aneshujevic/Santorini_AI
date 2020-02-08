@@ -83,9 +83,9 @@ def static_eval_custom(board_obj, move_coords, build_coords):
     anyone_won = board_obj.check_win(all_available_moves)
 
     if anyone_won == 1:
-        return math.inf
+        return 100000
     elif anyone_won == -1:
-        return -math.inf
+        return -100000
 
     b_x, b_y = build_coords
     build_blocks = board_obj.board_state[b_x][b_y]
@@ -255,9 +255,9 @@ def static_eval_project(board_obj, move_coords, build_coords):
     anyone_won = board_obj.check_win(all_available_moves)
 
     if anyone_won == 1:
-        return math.inf
+        return 100000
     elif anyone_won == -1:
-        return -math.inf
+        return -100000
 
     
     b_x, b_y = build_coords
